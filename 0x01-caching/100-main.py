@@ -36,4 +36,6 @@ my_cache.print_cache()
 my_cache.put("K", "K")
 my_cache.print_cache()
 my_cache.put("L", "L")
-my
+my_cache.print_cache()
+my_cache.put("M", "M")
+my_cache.print_cache()

@@ -10,38 +10,36 @@ class LFUCache(BaseCaching):
         """ Initialize the class """
         super().__init__()
         self.frequency = {}
-        self.usage_order = []
+        self.order = []
 
     def put(self, key, item):
         """ Add an item in the cache """
-        if key is not None and item is not None:
-            if key in self.cache_data:
-                self.frequency[key] += 1
-            else:
-                self.frequency[key] = 1
+        if key is None or item is None:
+            return
 
-            if key in self.cache_data:
-                self.usage_order.remove(key)
-            elif len(self.cache_data) >= BaseCaching.MAX_ITEMS:
-                least_freq = min(self.frequency.values())
-                least_freq_keys = [k for k, v in self.frequency.items() if v == least_freq]
-                if len(least_freq_keys) > 1:
-                    oldest = sorted([(self.usage_order.index(k), k) for k in least_freq_keys])[0][1]
-                else:
-                    oldest = least_freq_keys[0]
-                print(f"DISCARD: {oldest}")
-                del self.cache_data[oldest]
-                del self.frequency[oldest]
-                self.usage_order.remove(oldest)
+        if key in self.cache_data:
+            self.cache_data[key] = item
+            self.frequency[key] += 1
+        else:
+            if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
+                lfu_keys = [k for k, v in sorted(self.frequency.items(), key=lambda item: item[1])]
+                lru_keys = [k for k in self.order if k in lfu_keys]
+                discard_key = lru_keys[0]
+                print(f"DISCARD: {discard_key}")
+                del self.cache_data[discard_key]
+                del self.frequency[discard_key]
+                self.order.remove(discard_key)
 
             self.cache_data[key] = item
-            self.usage_order.append(key)
+            self.frequency[key] = 1
+            self.order.append(key)
 
     def get(self, key):
         """ Get an item by key """
-        if key is not None and key in self.cache_data:
-            self.frequency[key] += 1
-            self.usage_order.remove(key)
-            self.usage_order.append(key)
-            return self.cache_data[key]
-        return None
+        if key is None or key not in self.cache_data:
+            return None
+
+        self.frequency[key] += 1
+        self.order.append(self.order.pop(self.order.index(key)))
+        return self.cache_data[key]
+
